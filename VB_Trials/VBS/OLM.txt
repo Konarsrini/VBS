@@ -1,0 +1,728 @@
+'**********************************************************************
+
+		'strH = GetOLMsg("CustomerCentre,Body,"&strSR1&",GetStdFields,,")'GetStdFields should have no value, Gives: Msg output (as written),from,to,subj,recieved tme in array (8$9)
+		'strH = GetOLMsg(",Body,"&strSR1&",GetStdFields,,")'For inbox use nothing as folder name
+		'strH = GetOLMsgNew_TmeBsd("CustomerCentre,Body,1-1239361946,SendPlainReply,,,15")' propertyName:SendPlainReply, no value : Send plain reply; 
+		'strH = GetOLMsgNew_TmeBsd("CustomerCentre,Body,1OOLKIJUHY78765432,To,NARAYANARAO Srinath,SendReply,,,15")' propertyName:SendPlainReply, no value : Send plain reply; 
+		'strH = GetOLMsgNew_TmeBsd("CreateAccountEmail,To,dfghfdgdfytfd@dfhyfghdfgdf.com,ReceivedTime,#1/5/2021 8:30:38 AM#,Body,CustomerCenterSR@SolidWorks.com,,15")'Recieved time > = specified time	
+		'strH = GetOLMsg("CustomerCentre,To,NARAYANARAO Srinath,1")
+		'strH = GetOLMsgNew("CreateAccountEmail,To,ouwcwyi@mpfbeca.com,13")'FQVEIQB
+		'strH = GetOLMsgNew("CreateAccountEmail,Body,ouwcwyi@mpfbeca.com,Bgv^https")
+		'strH = GetOLMsg("CustomerCentre,Body,1-23177898949,Bgv^Order")
+		'strH = GetOLMsgNew(",Body,1-23177898949,Bgv^Order")
+		'strH = GetOLMsgNew(",Body,1-23177898949,13")
+		'strH = GetOLMsgNew(",Body,20201123_n_1649,nuv^20201123_n_1649") 
+		'strH = GetOLMsgNew("CustomerCentre,Body,20201123_n_1649,nuv^20201123_n_1649") 
+		'strH = GetOLMsgNew(",Body,20201123_n_1649,")
+		'strH = GetOLMsg(",Body,20201123_n_1649,")
+		'strH = GetOLMsgNew("CreateAccountEmail,Body,ouwcwyi@mpfbeca.com,ReceivedTime,2,Bgv^Validation code")'ReceivedTime since 2 min ago 
+		'strH = GetOLMsgNew("CreateAccountEmail,To,ouwcwyi@mpfbeca.com,ReceivedTime,"&int(60*24)&",Body,Thank you for registering,")
+		'Public Function GetLinefromOutlookEmail_InboxFolders(strFldValLineNumDet)
+		'**********************************************************************
+		'Variable Declaration
+		 Dim objOutlook, myNameSpace, ClientFolder, strField, strMailBody, arrA,strFolderName,objMailbox,objFolder
+		 Dim objFolder1,myItems,myItem, intmyitemsCount, intMailCount, strToActualRcvdDt, Counter, strField2, strTo, strField3
+		 Dim strReqRecdDate,strReqRecdTime,strMailRecdDate,strMailRecdTime
+		 Dim Folder1,intMainFoldCount,strB,Folder,k
+		'***********************************************************************
+		'MC list: IPM.Activity; IPM.Appointment; IPM.Contact; IPM.DistList; IPM.Document; 
+		'IPM.OLE.Class; IPM; IPM.Note; IPM.Note.IMC.Notification; 
+		'IPM.Note.Rules.OofTemplate.Microsoft; IPM.Post; IPM.StickyNote; 
+		'IPM.Recall.Report; IPM.Outlook.Recall; IPM.Remote; 
+		'IPM.Note.Rules.ReplyTemplate.Microsoft; IPM.Report; IPM.Resend; 
+		'IPM.Schedule.Meeting.Canceled; IPM.Schedule.Meeting.Request; 
+		'IPM.Schedule.Meeting.Resp.Neg; IPM.Schedule.Meeting.Resp.Pos; 
+		'IPM.Schedule.Meeting.Resp.Tent IPM.Note.Secure; IPM.Note.Secure.Sign; 
+		'IPM.Task; IPM.TaskRequest.Accept; IPM.TaskRequest.Decline; IPM.TaskRequest	Task; 
+		'IPM.TaskRequest.Update"
+		
+		Set objOutlook = CreateObject("Outlook.Application")
+		Set myNameSpace = objOutlook.GetNameSpace("MAPI")
+		GetOLM = ""
+		
+		arrH = Split("Body;Subject;To;SenderEmailAddress;" & _
+		"AlternateRecipientAllowed;Application;AutoForwarded;AutoResolvedWinner;BCC;" & _
+		"BillingInformation;BodyFormat;Categories;CC;Class;Companies;ConversationID;ConversationIndex;" & _
+		"ConversationTopic;CreationTime;DeferredDeliveryTime;DeleteAfterSubmit;DownloadState;" & _
+		"EnableSharedAttachments;EntryID;ExpiryTime;FlagDueBy;FlagIcon;FlagRequest;FlagStatus;" & _
+		"FormDescription;HasCoverSheet;HTMLBody;Importance;InternetCodepage;IsConflict;IsIPFax;" & _
+		"IsMarkedAsTask;LastModificationTime;MarkForDownload;MessageClass;Mileage;NoAging;" & _
+		"OriginatorDeliveryReportRequested;OutlookInternalVersion;OutlookVersion;Parent;Permission;" & _
+		"PermissionService;ReadReceiptRequested;ReceivedByEntryID;ReceivedByName;ReceivedOnBehalfOfEntryID;" & _
+		"ReceivedOnBehalfOfName;ReceivedTime;RecipientReassignmentProhibited;ReminderOverrideDefault;" & _
+		"ReminderPlaySound;ReminderSet;ReminderSoundFile;ReminderTime;RemoteStatus;ReplyRecipientNames;" & _
+		"RetentionExpirationDate;Saved;SaveSentMessageFolder;Sender;SenderEmailType;SenderName;" & _
+		"SendUsingAccount;Sensitivity;Sent;SentOn;SentOnBehalfOfName;Session;Size;Submitted;" & _
+		"TaskCompletedDate;TaskDueDate;TaskStartDate;TaskSubject;ToDoTaskOrdinal;UnRead;VotingOptions",";")
+		'--------------
+		arrFldValLineNumDet = Split(strFldValLineNumDet,",")
+		strAttachmentDwld = arrFldValLineNumDet(UBound(arrFldValLineNumDet))
+		intWaitT = arrFldValLineNumDet(UBound(arrFldValLineNumDet)-1)
+		strNewEmailSearch = arrFldValLineNumDet(UBound(arrFldValLineNumDet)-2)
+		strRequiredLineNumber = arrFldValLineNumDet(UBound(arrFldValLineNumDet)-3)
+		'strRequiredLineNumber,strNewEmailSearch,intWaitT,strAttachmentDwld
+		'--------------
+		strParameter1 = ""
+		strValue1 =  ""		
+		strParameter2 = ""
+		strValue2 =  ""
+		strParameter3 = ""
+		strValue3 =  ""
+		strParameter4 = ""
+		strValue4 =  ""
+		strParameter5 = ""
+		strValue5 =  ""
+		strFieldValue1 = ""
+		strFieldValue2 = ""
+		strFieldValue3 = ""
+		strFieldValue4 = ""
+		strFieldValue5 = ""
+		strFieldValue1o = ""
+		strFieldValue2o = ""
+		strFieldValue3o = ""
+		strFieldValue4o = ""
+		strFieldValue5o = ""
+		strFolderName = ""
+		strFolderList = ""
+		strGetStdFields = ""
+		strAppendingText = ""
+		
+		strBGParam = ""
+		strSendPlainReply = ""
+		strInboxFolderName = arrFldValLineNumDet(0)
+		strInboxFolderNameo = arrFldValLineNumDet(0)
+		'----
+		For o = 0 to UBound(arrFldValLineNumDet)-3'Change for new
+			If o = 0 Then 
+				strParamstring = arrFldValLineNumDet(o)
+			Else
+				strParamstring = strParamstring&";"&arrFldValLineNumDet(o)
+			End If
+		Next
+		arrParamstring = Split(strParamstring,";")
+		'----			
+		If UBound(arrParamstring) > 2 Then'3		
+			strParameter1 = arrFldValLineNumDet(1)
+			strValue1 = arrFldValLineNumDet(2)
+			If strParameter1 = "ReceivedTime" Then
+				If WildcardCheck(strValue1) = 0 Then
+					strValue1 = DateAdd("n","-"&strValue1,Now)
+				End If
+			End If
+			If strParameter1 = "SendPlainReply" Then
+					strSendPlainReply = "Y"
+					strParameter1 = ""
+					strAppendingText = strValue1
+					strValue1 = ""					
+			End If
+			If strParameter1 = "GetStdFields" Then
+					strGetStdFields = "Y"
+					strParameter1 = ""
+					strValue1 = ""					
+			End If
+		End If
+		If UBound(arrParamstring) > 3 Then	'5	
+			strParameter2 = arrFldValLineNumDet(3)
+			strValue2 = arrFldValLineNumDet(4)
+			If strParameter2 = "ReceivedTime" Then
+				If WildcardCheck(strValue2) = 0 Then
+					strValue2 = DateAdd("n","-"&strValue2,Now)
+				End If
+			End If
+			If strParameter2 = "SendPlainReply" Then
+					strSendPlainReply = "Y"
+					strParameter2 = ""
+					strAppendingText = strValue2
+					strValue2 = ""					
+			End If
+			If strParameter2 = "GetStdFields" Then
+					strGetStdFields = "Y"
+					strParameter2 = ""
+					strValue2 = ""					
+			End If
+		End If
+		If UBound(arrParamstring) > 5 Then	'7	
+			strParameter3 = arrFldValLineNumDet(5)
+			strValue3 = arrFldValLineNumDet(6)
+			If strParameter3 = "ReceivedTime" Then
+				If WildcardCheck(strValue3) = 0 Then
+					strValue3 = DateAdd("n","-"&strValue3,Now)
+				End If
+			End If
+			If strParameter3 = "SendPlainReply" Then
+					strSendPlainReply = "Y"
+					strParameter3 = ""
+					strAppendingText = strValue3
+					strValue3 = ""					
+			End If
+			If strParameter3 = "GetStdFields" Then
+					strGetStdFields = "Y"
+					strParameter3 = ""
+					strValue3 = ""					
+			End If
+		End If
+		If UBound(arrParamstring) > 7 Then	'9	
+			strParameter4 = arrFldValLineNumDet(7)
+			strValue4 = arrFldValLineNumDet(8)
+			If strParameter4 = "ReceivedTime" Then
+				If WildcardCheck(strValue4) = 0 Then
+					strValue4 = DateAdd("n","-"&strValue4,Now)
+				End If
+			End If
+			If strParameter4 = "SendPlainReply" Then
+					strSendPlainReply = "Y"
+					strParameter4 = ""
+					strAppendingText = strValue4
+					strValue4 = ""					
+			End If
+			If strParameter4 = "GetStdFields" Then
+					strGetStdFields = "Y"
+					strParameter4 = ""
+					strValue4 = ""					
+			End If
+		End If
+		If UBound(arrParamstring) > 9 Then	'11	
+			strParameter5 = arrFldValLineNumDet(9)
+			strValue5 = arrFldValLineNumDet(10)
+			If strParameter5 = "ReceivedTime" Then
+				If WildcardCheck(strValue5) = 0 Then
+					strValue5 = DateAdd("n","-"&strValue5,Now)
+				End If
+			End If
+			If strParameter5 = "SendPlainReply" Then
+					strSendPlainReply = "Y"
+					strParameter5 = ""
+					strAppendingText = strValue5
+					strValue5 = ""					
+			End If
+			If strParameter5 = "GetStdFields" Then
+					strGetStdFields = "Y"
+					strParameter5 = ""
+					strValue5 = ""					
+			End If
+		End If
+
+		'====================
+		intNumitemsCheck = 50
+		'====================
+		arrParam = Split(strParameter1&","&strParameter2&","&strParameter3&","&strParameter4,",")
+		For p = 0 to uBound(arrParam)
+			If arrParam(p) <> "" Then
+				If Instr("Body;Subject;To;SenderEmailAddress;ReceivedTime",arrParam(p)) = 0 Then
+					strBGParam = "Y"
+					Exit For	
+				End If			
+			End If
+		Next
+		'--------------
+		intG = UBound(arrFldValLineNumDet)
+		intPCount = (UBound(arrFldValLineNumDet)-1)/2 
+		'--------------
+		If strBGParam = "Y" Then
+			arrH = Split("Body;Subject;To;SenderEmailAddress;" & _
+			"AlternateRecipientAllowed;Application;AutoForwarded;AutoResolvedWinner;BCC;" & _
+			"BillingInformation;BodyFormat;Categories;CC;Class;Companies;ConversationID;ConversationIndex;" & _
+			"ConversationTopic;CreationTime;DeferredDeliveryTime;DeleteAfterSubmit;DownloadState;" & _
+			"EnableSharedAttachments;EntryID;ExpiryTime;FlagDueBy;FlagIcon;FlagRequest;FlagStatus;" & _
+			"FormDescription;HasCoverSheet;HTMLBody;Importance;InternetCodepage;IsConflict;IsIPFax;" & _
+			"IsMarkedAsTask;LastModificationTime;MarkForDownload;MessageClass;Mileage;NoAging;" & _
+			"OriginatorDeliveryReportRequested;OutlookInternalVersion;OutlookVersion;Parent;Permission;" & _
+			"PermissionService;ReadReceiptRequested;ReceivedByEntryID;ReceivedByName;ReceivedOnBehalfOfEntryID;" & _
+			"ReceivedOnBehalfOfName;ReceivedTime;RecipientReassignmentProhibited;ReminderOverrideDefault;" & _
+			"ReminderPlaySound;ReminderSet;ReminderSoundFile;ReminderTime;RemoteStatus;ReplyRecipientNames;" & _
+			"RetentionExpirationDate;Saved;SaveSentMessageFolder;Sender;SenderEmailType;SenderName;" & _
+			"SendUsingAccount;Sensitivity;Sent;SentOn;SentOnBehalfOfName;Session;Size;Submitted;" & _
+			"TaskCompletedDate;TaskDueDate;TaskStartDate;TaskSubject;ToDoTaskOrdinal;UnRead;VotingOptions",";")			
+		Else
+			arrH = Split("Body;Subject;To;SenderEmailAddress;ReceivedTime",";")
+		End If 
+		'--------------
+		strTime1 = Time
+
+		Do
+			strInboxFolderName = strInboxFolderNameo 
+			If strInboxFolderName = "" Then
+				strB = ""
+				Set Folders = myNameSpace.GetDefaultFolder(3)
+				intMainFoldCount = Folders.ShowItemCount
+				strFolderName = Folders.Parent
+				For k = 1 to intMainFoldCount
+					Set objMailbox = myNameSpace.Folders(strFolderName)
+					Set objFolder = objMailbox.Folders("Inbox")
+					Set objFolder1 = objFolder.Folders
+					For Each Folder in objFolder1
+						If strB = "" Then
+							strB = Folder.Name
+						Else
+							strB = strB&";"&Folder.Name
+						End If
+					Next
+				Next
+				strFolderList = ";"&strB
+			Else
+				strFolderList = strInboxFolderName
+			End If		  
+			'==========
+			arrInboxFolderName = Split(strFolderList,";")
+			For j1 = 0 to UBound(arrInboxFolderName)
+				'-----------
+				stri1 = ""
+				stri2 = ""
+				stri3 = ""
+				stri4 = ""
+				stri5 = ""
+				'-----------
+				strNextFolder = ""
+				For j1E = 1 To 1		
+					strInboxFolderName = arrInboxFolderName(j1)
+					Set ClientFolder = myNameSpace.GetDefaultFolder(3) 'Inbox = 6
+					strFolderName = ClientFolder.Parent
+					Set objMailbox = myNameSpace.Folders(strFolderName)
+					Set objFolder = objMailbox.Folders("Inbox")
+					If strInboxFolderName <> "" Then
+						Set objFolder1 = objFolder.Folders(strInboxFolderName)
+						Set myItems = objFolder1.Items
+					Else
+						Set myItems = objFolder.Items
+					End If
+					Set myItem = myItems.GetFirst
+					myItems.Sort "[ReceivedTime]",True		
+					intmyitemsCount = myitems.Count
+					If intmyitemsCount < 1 Then
+						Exit For
+					End If		
+					Counter = 0
+					For each myItem in myItems'myitem
+							'---
+							If Counter > intMyitemCount Then 
+								strNextFolder = "Y"
+								Exit For
+							End If
+							'---
+						For Nxtitem = 1 to 1 
+							strMC = myItem.MessageClass
+							If Instr(strMC,"REPORT.") <> 0 or _ 
+								Instr(strMC,"Missed") <> 0 or _
+								Instr(strMC,"Voicemail") <> 0 or _								
+								Instr(strMC,"Meeting") <> 0 Then
+								'myItem.Display
+								Exit For
+							End If
+							'-----------------------------------
+							Counter = Counter + 1
+							If strNewEmailSearch = "Y" Then
+								intMyitemCount = intNumitemsCheck
+							ElseIF strNewEmailSearch <> "Y" Then
+								intMyitemCount = intmyitemsCount
+							End If
+							If Counter > intMyitemCount Then 
+								strNextFolder = "Y"
+								Exit For
+							End If
+							'-----------------------------------
+						'For intMailCount = 1 to myitems.Count
+							'strMailRecdDate = DateValue(myItem.ReceivedTime)
+							'strMailRecdTime = TimeValue(myItem.ReceivedTime)
+							'strMailBody = myItem.Body 'This can be used to match Body of message with a specified text 
+							strToActualRcvdDt = myItem.ReceivedTime 'Order the Emails starting recent	
+							'----
+							'strActions = myItem.Actions
+							If strBGParam <> "Y" Then
+								strBody = myItem.Body
+								strSubject = myItem.Subject
+								strTo = myItem.To
+								strSenderEmailAddress = myItem.SenderEmailAddress
+								strReceivedTime = myItem.ReceivedTime
+							Else
+								strBody = myItem.Body
+								strSubject = myItem.Subject
+								strTo = myItem.To
+								strSenderEmailAddress = myItem.SenderEmailAddress
+								strAlternateRecipientAllowed = myItem.AlternateRecipientAllowed
+								strApplication = myItem.Application
+								'strAttachments = myItem.Attachments
+								strAutoForwarded = myItem.AutoForwarded
+								strAutoResolvedWinner = myItem.AutoResolvedWinner
+								strBCC = myItem.BCC
+								strBillingInformation = myItem.BillingInformation					
+								strBodyFormat = myItem.BodyFormat
+								strCategories = myItem.Categories
+								strCC = myItem.CC
+								strClass = myItem.Class
+								strCompanies = myItem.Companies
+								'strConflicts = myItem.Conflicts
+								strConversationID = myItem.ConversationID
+								strConversationIndex = myItem.ConversationIndex
+								strConversationTopic = myItem.ConversationTopic
+								strCreationTime = myItem.CreationTime
+								strDeferredDeliveryTime = myItem.DeferredDeliveryTime
+								strDeleteAfterSubmit = myItem.DeleteAfterSubmit
+								strDownloadState = myItem.DownloadState
+								strEnableSharedAttachments = myItem.EnableSharedAttachments
+								strEntryID = myItem.EntryID
+								strExpiryTime = myItem.ExpiryTime
+								strFlagDueBy = myItem.FlagDueBy
+								strFlagIcon = myItem.FlagIcon
+								strFlagRequest = myItem.FlagRequest
+								strFlagStatus = myItem.FlagStatus
+								strFormDescription = myItem.FormDescription
+								'strGetInspector = myItem.GetInspector
+								strHasCoverSheet = myItem.HasCoverSheet
+								strHTMLBody = myItem.HTMLBody
+								strImportance = myItem.Importance
+								strInternetCodepage = myItem.InternetCodepage
+								strIsConflict = myItem.IsConflict
+								strIsIPFax = myItem.IsIPFax
+								strIsMarkedAsTask = myItem.IsMarkedAsTask
+								'strItemProperties = myItem.ItemProperties
+								strLastModificationTime = myItem.LastModificationTime
+								'strLinks = myItem.Links
+								'strMAPIOBJECT = myItem.MAPIOBJECT
+								strMarkForDownload = myItem.MarkForDownload
+								strMessageClass = myItem.MessageClass
+								strMileage = myItem.Mileage
+								strNoAging = myItem.NoAging
+								strOriginatorDeliveryReportRequested = myItem.OriginatorDeliveryReportRequested
+								strOutlookInternalVersion = myItem.OutlookInternalVersion
+								strOutlookVersion = myItem.OutlookVersion
+								strParent = myItem.Parent
+								strPermission = myItem.Permission
+								strPermissionService = myItem.PermissionService
+								'strPermissionTemplateGuid = myItem.PermissionTemplateGuid
+								'strPropertyAccessor = myItem.PropertyAccessor
+								strReadReceiptRequested = myItem.ReadReceiptRequested
+								strReceivedByEntryID = myItem.ReceivedByEntryID
+								strReceivedByName = myItem.ReceivedByName
+								strReceivedOnBehalfOfEntryID = myItem.ReceivedOnBehalfOfEntryID
+								strReceivedOnBehalfOfName = myItem.ReceivedOnBehalfOfName
+								strReceivedTime = myItem.ReceivedTime
+								strRecipientReassignmentProhibited = myItem.RecipientReassignmentProhibited
+								'strRecipients = myItem.Recipients
+								strReminderOverrideDefault = myItem.ReminderOverrideDefault
+								strReminderPlaySound = myItem.ReminderPlaySound
+								strReminderSet = myItem.ReminderSet
+								strReminderSoundFile = myItem.ReminderSoundFile
+								strReminderTime = myItem.ReminderTime
+								strRemoteStatus = myItem.RemoteStatus
+								strReplyRecipientNames = myItem.ReplyRecipientNames
+								'strReplyRecipients = myItem.ReplyRecipients
+								strRetentionExpirationDate = myItem.RetentionExpirationDate
+								'strRetentionPolicyName = myItem.RetentionPolicyName
+								'strRTFBody = myItem.RTFBody
+								strSaved = myItem.Saved
+								strSaveSentMessageFolder = myItem.SaveSentMessageFolder
+								strSender = myItem.Sender					
+								strSenderEmailType = myItem.SenderEmailType
+								strSenderName = myItem.SenderName
+								strSendUsingAccount = myItem.SendUsingAccount
+								strSensitivity = myItem.Sensitivity
+								strSent = myItem.Sent
+								strSentOn = myItem.SentOn
+								strSentOnBehalfOfName = myItem.SentOnBehalfOfName
+								strSession = myItem.Session
+								strSize = myItem.Size					
+								strSubmitted = myItem.Submitted
+								strTaskCompletedDate = myItem.TaskCompletedDate
+								strTaskDueDate = myItem.TaskDueDate
+								strTaskStartDate = myItem.TaskStartDate
+								strTaskSubject = myItem.TaskSubject					
+								strToDoTaskOrdinal = myItem.ToDoTaskOrdinal
+								strUnRead = myItem.UnRead
+								'strUserProperties = myItem.UserProperties
+								strVotingOptions = myItem.VotingOptions
+								strVotingResponse = myItem.VotingResponse
+								strVotingOptions = "1"
+								strVotingResponse = "2"
+							End If
+							'----
+							If strBGParam <> "Y" Then
+								arrV1 = Split(strBody&"8$9"&strSubject&"8$9"&strTo&"8$9"&strSenderEmailAddress&"8$9"&strReceivedTime,"8$9")'&"8$9"&strAlternateRecipientAllowed&"8$9"&strApplication&"8$9"&strAutoForwarded&"8$9"&strAutoResolvedWinner&"8$9"&strBCC&"8$9"&strBillingInformation&"8$9"&strBodyFormat&"8$9"&strCategories&"8$9"&strCC&"8$9"&strClass&"8$9"&strCompanies&"8$9"&strConversationID&"8$9"&strConversationIndex&"8$9"&strConversationTopic&"8$9"&strCreationTime&"8$9"&strDeferredDeliveryTime&"8$9"&strDeleteAfterSubmit&"8$9"&strDownloadState&"8$9"&strEnableSharedAttachments&"8$9"&strEntryID&"8$9"&strExpiryTime&"8$9"&strFlagDueBy&"8$9"&strFlagIcon&"8$9"&strFlagRequest&"8$9"&strFlagStatus&"8$9"&strFormDescription&"8$9"&strHasCoverSheet&"8$9"&strHTMLBody&"8$9"&strImportance&"8$9"&strInternetCodepage&"8$9"&strIsConflict&"8$9"&strIsIPFax&"8$9"&strIsMarkedAsTask&"8$9"&strLastModificationTime&"8$9"&strMarkForDownload&"8$9"&strMessageClass&"8$9"&strMileage&"8$9"&strNoAging&"8$9"&strOriginatorDeliveryReportRequested&"8$9"&strOutlookInternalVersion&"8$9"&strOutlookVersion&"8$9"&strParent&"8$9"&strPermission&"8$9"&strPermissionService&"8$9"&strReadReceiptRequested&"8$9"&strReceivedByEntryID&"8$9"&strReceivedByName&"8$9"&strReceivedOnBehalfOfEntryID&"8$9"&strReceivedOnBehalfOfName&"8$9"&strReceivedTime&"8$9"&strRecipientReassignmentProhibited&"8$9"&strReminderOverrideDefault&"8$9"&strReminderPlaySound&"8$9"&strReminderSet&"8$9"&strReminderSoundFile&"8$9"&strReminderTime&"8$9"&strRemoteStatus&"8$9"&strReplyRecipientNames&"8$9"&strRetentionExpirationDate&"8$9"&strSaved&"8$9"&strSaveSentMessageFolder&"8$9"&strSender&"8$9"&strSenderEmailType&"8$9"&strSenderName&"8$9"&strSendUsingAccount&"8$9"&strSensitivity&"8$9"&strSent&"8$9"&strSentOn&"8$9"&strSentOnBehalfOfName&"8$9"&strSession&"8$9"&strSize&"8$9"&strSubmitted&"8$9"&strTaskCompletedDate&"8$9"&strTaskDueDate&"8$9"&strTaskStartDate&"8$9"&strTaskSubject&"8$9"&strToDoTaskOrdinal&"8$9"&strUnRead&"8$9"&strVotingOptions,"8$9")
+							Else
+								arrV1 = Split(strBody&"8$9"&strSubject&"8$9"&strTo&"8$9"&strSenderEmailAddress&"8$9"&strAlternateRecipientAllowed&"8$9"&strApplication&"8$9"&strAutoForwarded&"8$9"&strAutoResolvedWinner&"8$9"&strBCC&"8$9"&strBillingInformation&"8$9"&strBodyFormat&"8$9"&strCategories&"8$9"&strCC&"8$9"&strClass&"8$9"&strCompanies&"8$9"&strConversationID&"8$9"&strConversationIndex&"8$9"&strConversationTopic&"8$9"&strCreationTime&"8$9"&strDeferredDeliveryTime&"8$9"&strDeleteAfterSubmit&"8$9"&strDownloadState&"8$9"&strEnableSharedAttachments&"8$9"&strEntryID&"8$9"&strExpiryTime&"8$9"&strFlagDueBy&"8$9"&strFlagIcon&"8$9"&strFlagRequest&"8$9"&strFlagStatus&"8$9"&strFormDescription&"8$9"&strHasCoverSheet&"8$9"&strHTMLBody&"8$9"&strImportance&"8$9"&strInternetCodepage&"8$9"&strIsConflict&"8$9"&strIsIPFax&"8$9"&strIsMarkedAsTask&"8$9"&strLastModificationTime&"8$9"&strMarkForDownload&"8$9"&strMessageClass&"8$9"&strMileage&"8$9"&strNoAging&"8$9"&strOriginatorDeliveryReportRequested&"8$9"&strOutlookInternalVersion&"8$9"&strOutlookVersion&"8$9"&strParent&"8$9"&strPermission&"8$9"&strPermissionService&"8$9"&strReadReceiptRequested&"8$9"&strReceivedByEntryID&"8$9"&strReceivedByName&"8$9"&strReceivedOnBehalfOfEntryID&"8$9"&strReceivedOnBehalfOfName&"8$9"&strReceivedTime&"8$9"&strRecipientReassignmentProhibited&"8$9"&strReminderOverrideDefault&"8$9"&strReminderPlaySound&"8$9"&strReminderSet&"8$9"&strReminderSoundFile&"8$9"&strReminderTime&"8$9"&strRemoteStatus&"8$9"&strReplyRecipientNames&"8$9"&strRetentionExpirationDate&"8$9"&strSaved&"8$9"&strSaveSentMessageFolder&"8$9"&strSender&"8$9"&strSenderEmailType&"8$9"&strSenderName&"8$9"&strSendUsingAccount&"8$9"&strSensitivity&"8$9"&strSent&"8$9"&strSentOn&"8$9"&strSentOnBehalfOfName&"8$9"&strSession&"8$9"&strSize&"8$9"&strSubmitted&"8$9"&strTaskCompletedDate&"8$9"&strTaskDueDate&"8$9"&strTaskStartDate&"8$9"&strTaskSubject&"8$9"&strToDoTaskOrdinal&"8$9"&strUnRead&"8$9"&strVotingOptions,"8$9")
+							End If
+							'----
+							If stri1 <> "" Then
+								i = stri1
+								If strParameter1 = arrH(i) Then
+									strFieldValue1 = arrV1(i)
+									intC = intC+1			
+									stri1 = i							
+								End If
+							End If
+							If stri2 <> "" Then
+								i = stri2
+								If strParameter2 = arrH(i) Then
+									strFieldValue2 = arrV1(i)		
+									intC = intC+1
+									stri2 = i							
+								End If
+							End If
+							If stri3 <> "" Then
+								i = stri3
+								If strParameter3 = arrH(i) Then
+									strFieldValue3 = arrV1(i)	
+									intC = intC+1	
+									stri3 = i							
+								End If
+							End If
+							If stri4 <> "" Then
+								i = stri4
+								If strParameter4 = arrH(i) Then
+									strFieldValue4 = arrV1(i)	
+									intC = intC+1				
+									stri4 = i							
+								End If
+							End If
+							If stri5 <> "" Then
+								i = stri5
+								If strParameter5 = arrH(i) Then
+									strFieldValue5 = arrV1(i)	
+									intC = intC+1
+									stri5 = i														
+								End If
+							End If					
+							'----
+							If stri1 = "" Then						
+								intC = 0
+								For i = 0 to UBound(arrH)
+									If strParameter1 = arrH(i) Then
+										strFieldValue1 = arrV1(i)
+										intC = intC+1			
+										stri1 = i							
+									End If
+									If strParameter2 = arrH(i) Then
+										strFieldValue2 = arrV1(i)		
+										intC = intC+1
+										stri2 = i							
+									End If
+									If strParameter3 = arrH(i) Then
+										strFieldValue3 = arrV1(i)	
+										intC = intC+1	
+										stri3 = i							
+									End If
+									If strParameter4 = arrH(i) Then
+										strFieldValue4 = arrV1(i)	
+										intC = intC+1				
+										stri4 = i							
+									End If
+									If strParameter5 = arrH(i) Then
+										strFieldValue5 = arrV1(i)	
+										intC = intC+1
+										stri5 = i														
+									End If
+									If intPCount = intC Then
+										Exit For
+									End If			
+								Next
+							End If
+							'--------------
+							'=========
+							If strParameter1 = "ReceivedTime" Then
+								strValue1 = Replace(strValue1,"#","")
+								If DateDiff("s",strValue1,strFieldValue1) > -1 Then
+									strFieldValue1o = strFieldValue1
+									strFieldValue1 = strValue1
+								End If
+							End If
+							If strParameter2 = "ReceivedTime" Then
+								strValue2 = Replace(strValue2,"#","")
+								strA = DateDiff("s",strValue2,strFieldValue2)
+								If DateDiff("s",strValue2,strFieldValue2) > -1 Then
+									strFieldValue2o = strFieldValue2
+									strFieldValue2 = strValue2
+								End If
+							End If
+							If strParameter3 = "ReceivedTime" Then
+								strValue1 = Replace(strValue3,"#","")
+								If DateDiff("s",strValue3,strFieldValue3) > -1 Then
+									strFieldValue3o = strFieldValue3
+									strFieldValue3 = strValue3
+								End If
+							End If
+							If strParameter4 = "ReceivedTime" Then
+								strValue4 = Replace(strValue4,"#","")
+								If DateDiff("s",strValue4,strFieldValue4) > -1 Then
+									strFieldValue4o = strFieldValue4
+									strFieldValue4 = strValue4
+								End If
+							End If
+							'=========
+							For p = 1 to 1'p
+								For q = 1 To 1	
+								   	If strValue5 <> "" Then
+										If Instr(Lcase(Trim(strFieldValue1)),LCase(Trim(strValue1))) <> 0 and _ 
+										   Instr(Lcase(Trim(strFieldValue2)),LCase(Trim(strValue2))) <> 0 and _
+										   Instr(Lcase(Trim(strFieldValue3)),LCase(Trim(strValue3))) <> 0 and _
+										   Instr(Lcase(Trim(strFieldValue4)),LCase(Trim(strValue4))) <> 0 and _
+										   Instr(Lcase(Trim(strFieldValue5)),LCase(Trim(strValue5))) <> 0 Then
+											strFound = "Y"								
+										  End If
+										  Exit For
+									End If
+									'--------------
+									If strValue4 <> "" Then
+										If Instr(Lcase(Trim(strFieldValue1)),LCase(Trim(strValue1))) <> 0 and _ 
+										   Instr(Lcase(Trim(strFieldValue2)),LCase(Trim(strValue2))) <> 0 and _
+										   Instr(Lcase(Trim(strFieldValue3)),LCase(Trim(strValue3))) <> 0 and _
+										   Instr(Lcase(Trim(strFieldValue4)),LCase(Trim(strValue4))) <> 0 Then
+											strFound = "Y"			
+										End If
+										Exit For
+									End if
+									'--------------
+									If strValue3 <> "" Then
+										If Instr(Lcase(Trim(strFieldValue1)),LCase(Trim(strValue1))) <> 0 and _ 
+										   Instr(Lcase(Trim(strFieldValue2)),LCase(Trim(strValue2))) <> 0 and _
+										   Instr(Lcase(Trim(strFieldValue3)),LCase(Trim(strValue3))) <> 0 Then
+											strFound = "Y"				
+										End If
+										Exit For
+									End if
+									'--------------
+									If strValue2 <> "" Then
+										If Instr(Lcase(Trim(strFieldValue1)),LCase(Trim(strValue1))) <> 0 and _ 
+										   Instr(Lcase(Trim(strFieldValue2)),LCase(Trim(strValue2))) <> 0 Then
+											strFound = "Y"				
+										End If
+										Exit For
+									End if
+									'--------------
+									If strValue1 <> "" Then
+										If Instr(Lcase(Trim(strFieldValue1)),LCase(Trim(strValue1))) <> 0 Then
+											strFound = "Y"															
+										End If
+										Exit For
+									End if
+									'--------------
+							  	Next	
+								If strFound <> "Y" Then
+										If strFieldValue1o <> "" Then
+											strFieldValue1 = strFieldValue1o
+										End If	
+										If strFieldValue2o <> "" Then
+											strFieldValue2 = strFieldValue2o
+										End If	
+										If strFieldValue3o <> "" Then
+											strFieldValue3 = strFieldValue3o
+										End If	
+										If strFieldValue4o <> "" Then
+											strFieldValue4 = strFieldValue4o
+										End If	
+										If strFieldValue5o <> "" Then
+											strFieldValue5 = strFieldValue5o
+										End If	
+									Exit For
+								End If
+								'CloseOpenedOutlookMessageWindow								
+								arrA = Split(strBody,VbCrLF)
+								'---------
+								If strRequiredLineNumber = "" Then
+									GetOLM = strBody
+									myItem.Display
+									If strAttachmentDwld <> "Y" Then
+										Exit Do
+									End If										
+								End If
+								If AlphabetCheck(strRequiredLineNumber) = 1 Then
+									For t = 0 to UBound(arrA)
+										If arrA(t) <> "" Then
+											If Instr(strRequiredLineNumber,"Bgv^") <> 0 Then
+												If Instr(arrA(t),Replace(strRequiredLineNumber,"Bgv^","")) = 1 Then
+													GetOLM = trim(arrA(t))
+													myItem.Display
+													If strAttachmentDwld <> "Y" Then
+														Exit Do
+													End If	
+												End If
+											ElseIf Instr(arrA(t),Replace(strRequiredLineNumber,"nuv^","")) <> 0 Then
+												GetOLM = trim(arrA(t))
+												myItem.Display
+												If strAttachmentDwld <> "Y" Then
+													Exit Do
+												End If	
+											End If
+										End If
+									Next
+								Else
+									If strRequiredLineNumber <> "" Then
+										GetOLM = trim(arrA(strRequiredLineNumber))
+										myItem.Display
+										If strAttachmentDwld <> "Y" Then
+											Exit Do
+										End If
+									End If	
+								End If
+								'----Attachment---
+								strFileName = "\\MISUFTDEVAP1\Automation\QTP Docs\DownloadsForVerification\OutlookEmailAttachments\OL_"&DTSCROLL
+								CreateWEFolders(strFileName)
+								strFileName1 = ""
+								intCount = myItem.Attachments.Count
+								If intCount > 0 Then
+								    For i = 1 To intCount
+								    	If strFileName1 = "" Then
+								    		strFileName1 = strFileName&"\"&myItem.Attachments.Item(i).FileName
+								    	Else
+								    		strFileName1 = strFileName1&";"&strFileName&"\"&myItem.Attachments.Item(i).FileName
+								    	End If
+								        myItem.Attachments.Item(i).SaveAsFile strFileName1
+								    Next
+									GetOLM = GetOLM&"8$9"&strFileName1
+									
+								End If
+								'---------------------------------
+								'myItem.Display
+								Exit Do
+								Wait 3
+							Next'p
+						Next'Nxtitem	
+					Next'my item
+				'End If
+				Next'j1E
+			Next'j1
+			strTD = int(DateDiff("s",strTime1,Time))
+			TDS = int(intWaitT)
+			'print strTime1
+			'print strTD
+			'print TDS
+			If strTD > TDS Then
+				Exit Do
+			End If
+		Loop Until int(DateDiff("s",strTime1,Time)) > int(intWaitT)
+		'---
+		If strGetStdFields = "Y" and GetOLM <> "" Then
+			GetOLM = GetOLM&"8$9"&strSenderEmailAddress&"8$9"&strTo&"8$9"&strSubject&"8$9"&strReceivedTime
+		End If		
+		'---
+		strText1 = strParameter1&":"&strValue1&":"&strParameter2&":"&strValue2&":"&strParameter3&":"&strValue3&":"&strParameter4&":"&strValue4&":"&strParameter5&":"&strValue5
+		If strFound = "Y" Then			
+			strValue3 = arrFldValLineNumDet(6)
+			LogCap_Outlook_html "Pass: Outlook Email With search parameters :: "&strText1&" is available"																
+			CloseOpenedOutlookMessageWindow
+			If strSendPlainReply = "Y" Then
+				Set oResponse = myItem.Reply
+				'----
+				strH1 = myItem.Body
+				If strAppendingText <> "" Then'Following can be changed on need
+					myItem.Body = "============"'&VbCrLF&strAppendingText&VbCrLF&"============"&VbCrLF&strH1
+					strH2 = myItem.Body' = "============"&VbCrLF&strAppendingText&VbCrLF&"============"&VbCrLF&strH1
+				End If
+				'----
+				oResponse.Display
+				LogCap_Outlook_html "Pass: Reply to Outlook"																
+				oResponse.Send
+			End If
+		Else
+			LogCapture_Text "Result: Outlook Email With search parameters :: "&strText1&" is seemingly not available"																
+		End If
+		
+		Set objOutlook = Nothing
+		Set myNameSpace = Nothing
+		Set ClientFolder = Nothing
+		Set objMailbox = Nothing
+		Set objFolder = Nothing
+		Set objFolder1 = Nothing
+		Set myItems = Nothing
+		Set myItem = Nothing
+		
+		'=============================================
+'**********************************************************************
